@@ -2,4 +2,4 @@ venv
 cpp/build/*
 .claude
 __pycache__
-.vscode
+.vscode/settings.json

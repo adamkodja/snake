@@ -185,13 +185,26 @@ SnakeMathGame::SnakeMathGame()
 // ─────────────────────────────────────────────────────────────────────────────
 
 void SnakeMathGame::loadResources() {
-    // Font — try several common locations
+    // Font — cherche dans l'ordre : police bundlée > Windows > Linux > macOS
     for (auto& p : std::vector<std::string>{
+            // Police bundlée (placer un .ttf dans assets/ pour l'embarquer)
             "assets/font.ttf",
+            // Windows — Segoe UI Symbol en premier : couvre ▶ ✕ ₀-₉ √ ♥ π →
+            "C:/Windows/Fonts/seguisym.ttf",
             "C:/Windows/Fonts/arial.ttf",
             "C:/Windows/Fonts/calibri.ttf",
+            // Ubuntu / Debian
             "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-            "/System/Library/Fonts/Helvetica.ttc"})
+            "/usr/share/fonts/truetype/ubuntu/Ubuntu-R.ttf",
+            "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
+            "/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf",
+            "/usr/share/fonts/truetype/freefont/FreeSans.ttf",
+            // Arch / Fedora / generique
+            "/usr/share/fonts/TTF/DejaVuSans.ttf",
+            "/usr/share/fonts/dejavu-sans-fonts/DejaVuSans.ttf",
+            // macOS
+            "/System/Library/Fonts/Helvetica.ttc",
+            "/Library/Fonts/Arial.ttf"})
     {
         if (font_.loadFromFile(p)) { fontOk_=true; break; }
     }
@@ -739,7 +752,17 @@ void SnakeMathGame::drawSprite(sf::Texture& tex, float cx, float cy,
 //  Entry point
 // ─────────────────────────────────────────────────────────────────────────────
 
-int main() {
+int main(int, char* argv[]) {
+    // Déplace le répertoire courant vers le dossier de l'exe,
+    // afin que les chemins relatifs (assets/, polices…) fonctionnent
+    // quelle que soit la façon dont le binaire est lancé.
+    if (argv && argv[0]) {
+        std::error_code ec;
+        fs::path exe = argv[0];
+        if (exe.is_relative())
+            exe = fs::current_path(ec) / exe;
+        fs::current_path(exe.parent_path(), ec);
+    }
     SnakeMathGame game;
     game.run();
     return 0;

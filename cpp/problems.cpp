@@ -33,6 +33,18 @@ intWrongs(int sol, std::function<int()> gen,
     return result;
 }
 
+// Convertit un entier en chiffres indice Unicode  (ex: 10 → "₁₀")
+static std::string toSubscript(int n) {
+    static const char* const sub[] = {
+        u8"\u2080", u8"\u2081", u8"\u2082", u8"\u2083", u8"\u2084",
+        u8"\u2085", u8"\u2086", u8"\u2087", u8"\u2088", u8"\u2089"
+    };
+    std::string result;
+    for (char c : std::to_string(n))
+        result += sub[c - '0'];
+    return result;
+}
+
 // Formate un terme signé "+ b" / "- b" pour construire les énoncés
 static std::string signedTerm(int x) {
     return (x >= 0 ? " + " : " - ") + std::to_string(std::abs(x));
@@ -179,7 +191,7 @@ static Problem log_integer_problem() {
     std::vector<int> bv{2,3,5,10};
     int b=pick(bv), n=randint(1,5), val=1;
     for (int i=0;i<n;i++) val*=b;
-    return { "log_"+std::to_string(b)+"("+std::to_string(val)+") = ?",
+    return { "log"+toSubscript(b)+"("+std::to_string(val)+") = ?",
              E(n), intWrongs(n,[n]{return n+randint(-3,3);}) };
 }
 

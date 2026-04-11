@@ -1,0 +1,19 @@
+{
+    "configurations": [
+        {
+            "name": "CMake Tools (recommandé)",
+            "configurationProvider": "ms-vscode.cmake-tools"
+        },
+        {
+            "name": "Manuel (fallback sans CMake Tools)",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "${env:SFML_ROOT}/include"
+            ],
+            "defines": ["UNICODE", "_UNICODE"],
+            "cppStandard": "c++17",
+            "intelliSenseMode": "${default}"
+        }
+    ],
+    "version": 4
+}
