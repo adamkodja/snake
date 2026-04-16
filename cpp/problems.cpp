@@ -252,6 +252,7 @@ static const std::vector<DLEntry> DL_TABLE = {
     {"exp(x)",        {"1", "1", "1/2",  "1/6"}},
     {"sin(x)",        {"0", "1", "0",    "-1/6"}},
     {"cos(x)",        {"1", "0", "-1/2", "0"}},
+    {"(1+x)^2",       {"1", "2", "1",    "0"}},
     {"ln(1+x)",       {"0", "1", "-1/2", "1/3"}},
     {"1/(1+x)",       {"1", "-1", "1",   "-1"}},
     {"sqrt(1+x)",     {"1", "1/2", "-1/8", "1/16"}},
@@ -317,6 +318,84 @@ static Problem common_roots_problem() {
     };
 }
 
+struct SeqLimitEntry {
+    std::string un;
+    std::string lim;
+};
+
+static const std::vector<SeqLimitEntry> SEQ_LIMIT_TABLE = {
+    {"(2n+1)/(n+3)", "2"},
+    {"(3n^2-1)/(n^2+4)", "3"},
+    {"ln(n)/n", "0"},
+    {"n/(n^2+1)", "0"},
+    {"sin(1/n)", "0"},
+    {"(1+1/n)^n", "e"},
+    {"sqrt(n^2+3n)-n", "3/2"},
+};
+
+static Problem convergent_sequence_limit_problem() {
+    auto& e = pick(SEQ_LIMIT_TABLE);
+    std::vector<std::string> pool{
+        "0","1","2","3","-1","1/2","3/2","e"
+    };
+    return {
+        "n->inf : u_n="+e.un+" ; limite ?",
+        {e.lim, e.lim},
+        symbolicWrongs(e.lim, pool)
+    };
+}
+
+struct SeriesNatureEntry {
+    std::string un;
+    std::string nature;
+};
+
+static const std::vector<SeriesNatureEntry> SERIES_NATURE_TABLE = {
+    {"1/n^2", "absolue"},
+    {"(-1)^(n+1)/n", "simple"},
+    {"(-1)^n/sqrt(n)", "simple"},
+    {"sin(n)/n", "simple"},
+    {"1/n", "divergente"},
+    {"1/sqrt(n)", "divergente"},
+    {"(-1)^n", "divergente"},
+};
+
+static Problem series_nature_problem() {
+    auto& e = pick(SERIES_NATURE_TABLE);
+    std::vector<std::string> pool{"abs", "sim", "div", "?"};
+    return {
+        "Nature de somme u_n, u_n="+e.un+" ? (absolue/simple/divergente)",
+        {e.nature, e.nature},
+        symbolicWrongs(e.nature, pool)
+    };
+}
+
+struct RadiusEntry {
+    std::string series;
+    std::string radius;
+};
+
+static const std::vector<RadiusEntry> POWER_SERIES_TABLE = {
+    {"somme x^n", "1"},
+    {"somme x^n/n!", "inf"},
+    {"somme n! x^n", "0"},
+    {"somme n x^n", "1"},
+    {"somme x^n/n^2", "1"},
+    {"somme (x/3)^n", "3"},
+    {"somme (2x)^n", "1/2"},
+    {"somme x^(2n)", "1"},
+};
+
+static Problem power_series_radius_problem() {
+    auto& e = pick(POWER_SERIES_TABLE);
+    std::vector<std::string> pool{"0","1/2","1","2","3","inf"};
+    return {
+        "Rayon de convergence de "+e.series+" ?",
+        {e.radius, e.radius},
+        symbolicWrongs(e.radius, pool)
+    };
+}
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Table des générateurs par niveau
@@ -348,5 +427,8 @@ const std::map<Difficulty, std::vector<ProbGen>> GENERATORS = {
         equivalent_problem,
         roots_of_unity_order_problem,
         common_roots_problem,
+        convergent_sequence_limit_problem,
+        series_nature_problem,
+        power_series_radius_problem,
     }},
 };
