@@ -1,3 +1,4 @@
+Windows
 compiler cpp:
 
 cmake -B build -DSFML_ROOT=/chemin/vers/sfml
@@ -7,6 +8,10 @@ lancer jeu cpp (depuis snake/):
 
 ./cpp/build/Release/snake_math.exe
 
+
+
+
+Ubuntu
 # Installer SFML (system, pas besoin de SFML_ROOT)
 sudo apt install libsfml-dev
 

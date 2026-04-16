@@ -438,7 +438,7 @@ void SnakeMathGame::handleEvents() {
                     } else if (b.action=="MEDIUM") {
                         diff_=Difficulty::MEDIUM; initGame(); started_=true; menuOpen_=false;
                     } else if (b.action=="HARD") {
-                        // no generators — do nothing
+                        diff_=Difficulty::HARD;   initGame(); started_=true; menuOpen_=false;
                     }
                     break;
                 }
@@ -462,9 +462,9 @@ void SnakeMathGame::render(float t) {
     drawHUD();
 
     if (menuOpen_)       drawMenu();
-    else if (paused_)    drawOverlay("PAUSE", "P  pour continuer");
+    else if (paused_)    drawOverlay("PAUSE", "P  to resume");
     if (over_)           drawOverlay("GAME OVER",
-                             "Score : "+std::to_string(score_)+"   —   R pour rejouer");
+                             "Score : "+std::to_string(score_)+"   —   R to restart");
 
     window_.display();
 }
@@ -646,20 +646,20 @@ void SnakeMathGame::drawMenu() {
     };
 
     // Start / Resume
-    drawBtn(started_ ? u8"\u25b6 Reprendre" : u8"\u25b6 Commencer",
+    drawBtn(started_ ? u8"\u25b6 Resume" : u8"\u25b6 Start",
             "resume", false, false, gap);
 
     // Difficulty label
-    drawText("Difficulte", W/2.f, cur+sepH/2.f,
+    drawText("Difficulty", W/2.f, cur+sepH/2.f,
              (unsigned)std::max(8.f,cell_*0.30f), C_TXT);
     cur += sepH+gapSm;
 
     // Difficulty buttons
     struct DiffBtn { Difficulty d; std::string lbl; std::string act; };
     std::vector<DiffBtn> diffs = {
-        {Difficulty::EASY,   "Facile",             "EASY"},
-        {Difficulty::MEDIUM, "Moyen",              "MEDIUM"},
-        {Difficulty::HARD,   "Difficile (bientot)","HARD"},
+        {Difficulty::EASY,   "Easy",             "EASY"},
+        {Difficulty::MEDIUM, "Medium",              "MEDIUM"},
+        {Difficulty::HARD,   "Hard",                "HARD"},
     };
     for (int i=0;i<(int)diffs.size();i++) {
         auto& db = diffs[i];
@@ -671,7 +671,7 @@ void SnakeMathGame::drawMenu() {
     }
 
     // Quit
-    drawBtn(u8"\u2715 Quitter", "quit", false, false, padV);
+    drawBtn(u8"\u2715 Quit", "quit", false, false, padV);
 }
 
 // ── Overlay ───────────────────────────────────────────────────────────────────

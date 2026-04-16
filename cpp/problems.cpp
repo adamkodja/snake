@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <cmath>
 #include <functional>
+#include <numeric>
 #include <set>
 
 // ── Helpers internes ─────────────────────────────────────────────────────────
@@ -48,6 +49,22 @@ static std::string toSubscript(int n) {
 // Formate un terme signé "+ b" / "- b" pour construire les énoncés
 static std::string signedTerm(int x) {
     return (x >= 0 ? " + " : " - ") + std::to_string(std::abs(x));
+}
+
+// Génère des mauvaises réponses symboliques distinctes à partir d'un pool
+static std::vector<MathExpr>
+symbolicWrongs(const std::string& sol,
+               const std::vector<std::string>& pool,
+               int n = NUM_WRONGS)
+{
+    std::vector<std::string> cand;
+    for (auto& v : pool) if (v != sol) cand.push_back(v);
+    std::shuffle(cand.begin(), cand.end(), getRng());
+    if ((int)cand.size() > n) cand.resize(n);
+
+    std::vector<MathExpr> out;
+    for (auto& v : cand) out.push_back({v, v});
+    return out;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -94,9 +111,10 @@ static Problem modulo_problem() {
 
 static Problem pgcd_problem() {
     int g = randint(2,9), a = g*randint(2,8), b = g*randint(2,8);
+    int sol = std::gcd(a, b);
     std::vector<int> d{-2,-1,1,2,3};
     return { "pgcd("+std::to_string(a)+", "+std::to_string(b)+") = ?",
-             E(g), intWrongs(g,[g,d]{return g+pick(d);}) };
+             E(sol), intWrongs(sol,[sol,d]{return sol+pick(d);}) };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -199,7 +217,7 @@ static Problem exp_equation_problem() {
     std::vector<int> bv{2,3,5};
     int b=pick(bv), s=randint(1,5), val=1;
     for (int i=0;i<s;i++) val*=b;
-    return { std::to_string(b)+u8"\u02e3 = "+std::to_string(val)+u8" \u2192 x=?",
+    return { std::to_string(b)+"^x = "+std::to_string(val)+u8" \u2192 x=?",
              E(s), intWrongs(s,[s]{return s+randint(-3,3);}) };
 }
 
@@ -219,6 +237,86 @@ static Problem geometric_sequence_problem() {
              u8" \u2192 u"+std::to_string(n)+"=?",
              E(s), intWrongs(s,[s,d]{return s+pick(d);},NUM_WRONGS,false) };
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Niveau HARD
+// ─────────────────────────────────────────────────────────────────────────────
+
+struct DLEntry {
+    std::string f;
+    // coeffs de x^0, x^1, x^2, x^3 dans le DL en 0
+    std::vector<std::string> c;
+};
+
+static const std::vector<DLEntry> DL_TABLE = {
+    {"exp(x)",        {"1", "1", "1/2",  "1/6"}},
+    {"sin(x)",        {"0", "1", "0",    "-1/6"}},
+    {"cos(x)",        {"1", "0", "-1/2", "0"}},
+    {"ln(1+x)",       {"0", "1", "-1/2", "1/3"}},
+    {"1/(1+x)",       {"1", "-1", "1",   "-1"}},
+    {"sqrt(1+x)",     {"1", "1/2", "-1/8", "1/16"}},
+};
+
+static Problem dl_coefficient_problem() {
+    auto& e = pick(DL_TABLE);
+    int k = randint(1,3);
+    std::string sol = e.c[k];
+    std::vector<std::string> pool{
+        "0","1","-1","1/2","-1/2","1/3","-1/3","1/6","-1/6","1/8","-1/8","1/16","-1/16"
+    };
+
+    return {
+        "DL"+toSubscript(3)+" en 0 de "+e.f+" : coeff de x^"+std::to_string(k)+" ?",
+        {sol, sol},
+        symbolicWrongs(sol, pool)
+    };
+}
+
+struct EqEntry {
+    std::string expr;
+    std::string eqv;
+};
+
+static const std::vector<EqEntry> EQ_TABLE = {
+    {"sin(x)", "x"},
+    {"tan(x)", "x"},
+    {"1-cos(x)", "x^2/2"},
+    {"ln(1+x)", "x"},
+    {"exp(x)-1", "x"},
+    {"sqrt(1+x)-1", "x/2"},
+};
+
+static Problem equivalent_problem() {
+    auto& e = pick(EQ_TABLE);
+    std::vector<std::string> pool{"x","x/2","x^2","x^2/2","1","-x","-x^2/2"};
+    return {
+        "x->0 : "+e.expr+" ~ ?",
+        {e.eqv, e.eqv},
+        symbolicWrongs(e.eqv, pool)
+    };
+}
+
+static Problem roots_of_unity_order_problem() {
+    int n = randint(4,12);
+    int k = randint(1,n-1);
+    int sol = n / std::gcd(n, k);
+    return {
+        "z=exp(2i"+std::to_string(k)+"pi/"+std::to_string(n)+") : ordre de z ?",
+        E(sol),
+        intWrongs(sol, [n]{ return randint(1,n); })
+    };
+}
+
+static Problem common_roots_problem() {
+    int n = randint(4,16), m = randint(4,16);
+    int sol = std::gcd(n, m);
+    return {
+        "Nb racines communes de X^"+std::to_string(n)+"-1 et X^"+std::to_string(m)+"-1 ?",
+        E(sol),
+        intWrongs(sol, [n,m]{ return randint(1,std::max(n,m)); })
+    };
+}
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Table des générateurs par niveau
@@ -245,5 +343,10 @@ const std::map<Difficulty, std::vector<ProbGen>> GENERATORS = {
         arithmetic_sequence_problem,
         geometric_sequence_problem,
     }},
-    {Difficulty::HARD, {}},   // à compléter
+    {Difficulty::HARD, {
+        dl_coefficient_problem,
+        equivalent_problem,
+        roots_of_unity_order_problem,
+        common_roots_problem,
+    }},
 };
