@@ -32,6 +32,7 @@ constexpr float LIFE_FRUIT_P  = 0.35f;
 constexpr int   DEFAULT_CELL  = 36;
 constexpr int   SPRITE_FRAMES = 6;
 constexpr int   FPS_LIMIT     = 60;
+constexpr float REVEAL_MS     = 1500.f;  // durée d'affichage de la bonne réponse
 
 // Head/tail asset faces Right (0°). PIL rotated CCW → SFML rotates CW.
 const std::map<std::string, float> SPRITE_ROT = {
@@ -123,6 +124,11 @@ private:
     Difficulty   diff_       = Difficulty::EASY;
     bool         menuOpen_   = true;
     bool         started_    = false;
+
+    bool         reveal_       = false;
+    float        revealAccum_  = 0.f;
+    MathExpr     revealSol_;
+    bool         revealCorrect_= false;
 
     // ── Timing ──────────────────────────────────────────────────────────────
     sf::Clock clock_;
@@ -252,6 +258,9 @@ void SnakeMathGame::initGame() {
     prob_.reset();
     aframe_  = 0;
     stepAccum_= 0.f;
+    reveal_       = false;
+    revealAccum_  = 0.f;
+    revealCorrect_= false;
     newProblem();
 }
 
@@ -328,13 +337,21 @@ void SnakeMathGame::step() {
             [eaten](const Fruit& f){ return &f==eaten; }), fruits_.end());
     } else if (eaten->correct) {
         score_++;
-        newProblem();                 // grow (no pop_back)
+        revealSol_     = prob_->solution;
+        revealCorrect_ = true;
+        reveal_        = true;
+        revealAccum_   = 0.f;
+        // snake grandit (pas de pop_back) ; fruit reste pour le surlignage vert
     } else {
         snake_.pop_back();
         lives_--;
-        fruits_.erase(std::remove_if(fruits_.begin(),fruits_.end(),
-            [eaten](const Fruit& f){ return &f==eaten; }), fruits_.end());
-        if (lives_<=0) over_=true;
+        if (lives_ <= 0) { over_ = true; return; }
+        fruits_.erase(std::remove_if(fruits_.begin(), fruits_.end(),
+            [eaten](const Fruit& f){ return &f == eaten; }), fruits_.end());
+        revealSol_     = prob_->solution;
+        revealCorrect_ = false;
+        reveal_        = true;
+        revealAccum_   = 0.f;
     }
 }
 
@@ -368,15 +385,24 @@ void SnakeMathGame::run() {
         handleEvents();
 
         if (!over_ && !paused_ && !menuOpen_) {
-            stepAccum_ += dt;
-            if (stepAccum_ >= SPEED_MS) {
-                prevSnake_ = snake_;
-                aframe_    = (aframe_+1) % SPRITE_FRAMES;
-                step();
-                lastStep_  = SPEED_MS;
-                stepAccum_ -= SPEED_MS;
+            if (reveal_) {
+                revealAccum_ += dt;
+                if (revealAccum_ >= REVEAL_MS) {
+                    reveal_      = false;
+                    revealAccum_ = 0.f;
+                    newProblem();
+                }
+            } else {
+                stepAccum_ += dt;
+                if (stepAccum_ >= SPEED_MS) {
+                    prevSnake_ = snake_;
+                    aframe_    = (aframe_+1) % SPRITE_FRAMES;
+                    step();
+                    lastStep_  = SPEED_MS;
+                    stepAccum_ -= SPEED_MS;
+                }
+                lastStep_ = (float)SPEED_MS;
             }
-            lastStep_ = (float)SPEED_MS;
         }
 
         float t = (lastStep_ > 0.f)
@@ -497,6 +523,16 @@ void SnakeMathGame::drawHUD() {
         drawText(prob_->statement, cw/2.f, hudH_*0.35f, fs, C_TXT, true);
     }
 
+    // Reveal feedback
+    if (reveal_) {
+        unsigned rfs = std::max(9u, (unsigned)(cell_ * 0.30f));
+        sf::Color rcol = revealCorrect_ ? sf::Color(0x44,0xff,0x88) : sf::Color(0xff,0x66,0x66);
+        std::string rmsg = revealCorrect_
+            ? u8"✓ Correct !"
+            : u8"✗ Réponse : " + revealSol_.display;
+        drawText(rmsg, cw / 2.f, hudH_ * 0.60f, rfs, rcol, true);
+    }
+
     // Hearts (individual so we can colour each differently)
     unsigned hSz = std::max(10u, (unsigned)(cell_*0.42f));
     float hx = cell_*0.3f, hy = hudH_*0.75f;
@@ -532,11 +568,24 @@ void SnakeMathGame::drawFruits() {
             window_.draw(box);
             drawText(u8"\u2665", cx, cy, (unsigned)(cell_*0.50f), C_LIVES);
         } else {
-            box.setFillColor({0x0f,0x1e,0x3c});
-            box.setOutlineColor(C_FRUIT_O);
+            bool isCorrect = reveal_ && (fr.value == revealSol_);
+            bool isWrong   = reveal_ && !fr.correct && !(fr.value == revealSol_);
+            sf::Color fillCol    = isCorrect ? sf::Color(0x08,0x2e,0x14)
+                                 : isWrong   ? sf::Color(0x2e,0x08,0x08)
+                                 :             sf::Color(0x0f,0x1e,0x3c);
+            sf::Color outlineCol = isCorrect ? sf::Color(0x00,0xcc,0x44)
+                                 : isWrong   ? sf::Color(0xcc,0x22,0x22)
+                                 :             C_FRUIT_O;
+            sf::Color textCol    = isCorrect ? sf::Color(0x55,0xff,0x99)
+                                 : isWrong   ? sf::Color(0xff,0x66,0x66)
+                                 :             C_TXT;
+            if (isCorrect || isWrong)
+                box.setOutlineThickness(std::max(2.f, cell_*0.09f));
+            box.setFillColor(fillCol);
+            box.setOutlineColor(outlineCol);
             window_.draw(box);
             unsigned fs = std::max(8u,(unsigned)(cell_*0.34f));
-            drawText(fr.value.display, cx, cy, fs, C_TXT);
+            drawText(fr.value.display, cx, cy, fs, textCol);
         }
     }
 }
