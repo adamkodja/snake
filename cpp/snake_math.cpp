@@ -177,7 +177,7 @@ private:
 SnakeMathGame::SnakeMathGame()
     : window_(sf::VideoMode(COLS*DEFAULT_CELL,
                             (unsigned)((ROWS+HUD_ROWS_F)*DEFAULT_CELL)),
-              "Snake Maths",
+              "Snake Math",
               sf::Style::Default)
 {
     window_.setFramerateLimit(FPS_LIMIT);
@@ -490,7 +490,7 @@ void SnakeMathGame::render(float t) {
     if (menuOpen_)       drawMenu();
     else if (paused_)    drawOverlay("PAUSE", "P  to resume");
     if (over_)           drawOverlay("GAME OVER",
-                             "Score : "+std::to_string(score_)+"   —   R to restart");
+                             "Score: "+std::to_string(score_)+"   —   R to restart");
 
     window_.display();
 }
@@ -528,8 +528,8 @@ void SnakeMathGame::drawHUD() {
         unsigned rfs = std::max(9u, (unsigned)(cell_ * 0.30f));
         sf::Color rcol = revealCorrect_ ? sf::Color(0x44,0xff,0x88) : sf::Color(0xff,0x66,0x66);
         std::string rmsg = revealCorrect_
-            ? u8"✓ Correct !"
-            : u8"✗ Réponse : " + revealSol_.display;
+            ? u8"✓ Correct!"
+            : u8"✗ Answer: " + revealSol_.display;
         drawText(rmsg, cw / 2.f, hudH_ * 0.60f, rfs, rcol, true);
     }
 
@@ -544,7 +544,7 @@ void SnakeMathGame::drawHUD() {
     }
 
     // Score (right-aligned)
-    std::string sc = "Score : "+std::to_string(score_);
+    std::string sc = "Score: "+std::to_string(score_);
     unsigned sfs = std::max(10u,(unsigned)(cell_*0.40f));
     drawText(sc, cw - cell_*0.3f, hudH_*0.75f, sfs, C_TXT, false, HA::Right, VA::Center);
 }
@@ -640,11 +640,15 @@ void SnakeMathGame::drawMenu() {
     float gapSm = gap*0.45f;
     float titH  = std::max(18.f,  cell_*0.90f);
     float sepH  = std::max(12.f,  cell_*0.55f);
-    float padV  = std::max(12.f,  cell_*0.55f);
-    float padH  = std::max(14.f,  cell_*0.60f);
+    float padV   = std::max(12.f,  cell_*0.55f);
+    float padH   = std::max(14.f,  cell_*0.60f);
+    float instrH = std::max(8.f,   cell_*0.29f);
+    float creditH= std::max(7.f,   cell_*0.24f);
+    float tinyGap= std::max(3.f,   cell_*0.10f);
 
     float totalH = padV+titH+gap + btnH+gap + sepH+gapSm
-                   + btnH+gapSm+btnH+gapSm+btnH + gap + btnH+padV;
+                   + btnH+gapSm+btnH+gapSm+btnH + gap + btnH
+                   + gapSm + instrH + tinyGap + creditH + tinyGap + creditH + padV;
     float bw = btnW+2.f*padH;
     float bx0=(W-bw)/2.f, by0=(H-totalH)/2.f;
     float btnX0=bx0+padH, btnX1=bx0+bw-padH;
@@ -720,7 +724,23 @@ void SnakeMathGame::drawMenu() {
     }
 
     // Quit
-    drawBtn(u8"\u2715 Quit", "quit", false, false, padV);
+    drawBtn(u8"\u2715 Quit", "quit", false, false, gapSm);
+
+    // Instruction
+    drawText(u8"Eat the correct answer \u2014 wrong ones cost a life",
+             W/2.f, cur + instrH/2.f,
+             (unsigned)std::max(8.f, cell_*0.27f), C_TXT, false);
+    cur += instrH + tinyGap;
+
+    // Credits
+    sf::Color dimCol{0x77, 0x88, 0x99};
+    unsigned creditSz = (unsigned)std::max(7.f, cell_*0.22f);
+    drawText("GameLab CS 2025 \u2013 2026",
+             W/2.f, cur + creditH/2.f, creditSz, dimCol, true);
+    cur += creditH + tinyGap;
+    drawText(u8"Adrien Rousselle \u00b7 L\u00e9na Rachedi-Batorski \u00b7 Adam Kodja",
+             W/2.f, cur + creditH/2.f, creditSz, dimCol, false);
+    cur += creditH + padV;
 }
 
 // ── Overlay ───────────────────────────────────────────────────────────────────

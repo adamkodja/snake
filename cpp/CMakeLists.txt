@@ -68,6 +68,20 @@ if(WIN32)
     endif()
 endif()
 
+# ── Post-build : copier le runtime MSVC (vcruntime140.dll, msvcp140.dll…) ────
+# Permet de distribuer le jeu sans installer la VC++ Redistributable
+if(MSVC)
+    include(InstallRequiredSystemLibraries)
+    if(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS)
+        add_custom_command(TARGET snake_math POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS}
+                $<TARGET_FILE_DIR:snake_math>
+            COMMAND_EXPAND_LISTS
+        )
+    endif()
+endif()
+
 # ── Post-build : copier les assets ───────────────────────────────────────────
 add_custom_command(TARGET snake_math POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory

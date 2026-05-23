@@ -113,7 +113,7 @@ static Problem pgcd_problem() {
     int g = randint(2,9), a = g*randint(2,8), b = g*randint(2,8);
     int sol = std::gcd(a, b);
     std::vector<int> d{-2,-1,1,2,3};
-    return { "pgcd("+std::to_string(a)+", "+std::to_string(b)+") = ?",
+    return { "gcd("+std::to_string(a)+", "+std::to_string(b)+") = ?",
              E(sol), intWrongs(sol,[sol,d]{return sol+pick(d);}) };
 }
 
@@ -267,7 +267,7 @@ static Problem dl_coefficient_problem() {
     };
 
     return {
-        "DL"+toSubscript(3)+" en 0 de "+e.f+" : coeff de x^"+std::to_string(k)+" ?",
+        "Taylor"+toSubscript(3)+" at 0 of "+e.f+": coeff of x^"+std::to_string(k)+"?",
         {sol, sol},
         symbolicWrongs(sol, pool)
     };
@@ -291,7 +291,7 @@ static Problem equivalent_problem() {
     auto& e = pick(EQ_TABLE);
     std::vector<std::string> pool{"x","x/2","x^2","x^2/2","1","-x","-x^2/2"};
     return {
-        "x->0 : "+e.expr+" ~ ?",
+        "x->0: "+e.expr+" ~ ?",
         {e.eqv, e.eqv},
         symbolicWrongs(e.eqv, pool)
     };
@@ -302,7 +302,7 @@ static Problem roots_of_unity_order_problem() {
     int k = randint(1,n-1);
     int sol = n / std::gcd(n, k);
     return {
-        "z=exp(2i"+std::to_string(k)+"pi/"+std::to_string(n)+") : ordre de z ?",
+        "z=exp(2i"+std::to_string(k)+"pi/"+std::to_string(n)+"): order of z?",
         E(sol),
         intWrongs(sol, [n]{ return randint(1,n); })
     };
@@ -312,7 +312,7 @@ static Problem common_roots_problem() {
     int n = randint(4,16), m = randint(4,16);
     int sol = std::gcd(n, m);
     return {
-        "Nb racines communes de X^"+std::to_string(n)+"-1 et X^"+std::to_string(m)+"-1 ?",
+        "# common roots of X^"+std::to_string(n)+"-1 and X^"+std::to_string(m)+"-1?",
         E(sol),
         intWrongs(sol, [n,m]{ return randint(1,std::max(n,m)); })
     };
@@ -339,7 +339,7 @@ static Problem convergent_sequence_limit_problem() {
         "0","1","2","3","-1","1/2","3/2","e"
     };
     return {
-        "n->inf : u_n="+e.un+" ; limite ?",
+        "n->inf: u_n="+e.un+", limit?",
         {e.lim, e.lim},
         symbolicWrongs(e.lim, pool)
     };
@@ -351,20 +351,20 @@ struct SeriesNatureEntry {
 };
 
 static const std::vector<SeriesNatureEntry> SERIES_NATURE_TABLE = {
-    {"1/n^2", "absolue"},
-    {"(-1)^(n+1)/n", "simple"},
-    {"(-1)^n/sqrt(n)", "simple"},
-    {"sin(n)/n", "simple"},
-    {"1/n", "divergente"},
-    {"1/sqrt(n)", "divergente"},
-    {"(-1)^n", "divergente"},
+    {"1/n^2", "abs."},
+    {"(-1)^(n+1)/n", "cond."},
+    {"(-1)^n/sqrt(n)", "cond."},
+    {"sin(n)/n", "cond."},
+    {"1/n", "div."},
+    {"1/sqrt(n)", "div."},
+    {"(-1)^n", "div."},
 };
 
 static Problem series_nature_problem() {
     auto& e = pick(SERIES_NATURE_TABLE);
-    std::vector<std::string> pool{"abs", "sim", "div", "?"};
+    std::vector<std::string> pool{"abs.", "cond.", "div.", "?"};
     return {
-        "Nature de somme u_n, u_n="+e.un+" ? (absolue/simple/divergente)",
+        "Nature of sum u_n="+e.un+"? (abs./cond./div.)",
         {e.nature, e.nature},
         symbolicWrongs(e.nature, pool)
     };
@@ -376,21 +376,21 @@ struct RadiusEntry {
 };
 
 static const std::vector<RadiusEntry> POWER_SERIES_TABLE = {
-    {"somme x^n", "1"},
-    {"somme x^n/n!", "inf"},
-    {"somme n! x^n", "0"},
-    {"somme n x^n", "1"},
-    {"somme x^n/n^2", "1"},
-    {"somme (x/3)^n", "3"},
-    {"somme (2x)^n", "1/2"},
-    {"somme x^(2n)", "1"},
+    {"sum x^n", "1"},
+    {"sum x^n/n!", "inf"},
+    {"sum n! x^n", "0"},
+    {"sum n x^n", "1"},
+    {"sum x^n/n^2", "1"},
+    {"sum (x/3)^n", "3"},
+    {"sum (2x)^n", "1/2"},
+    {"sum x^(2n)", "1"},
 };
 
 static Problem power_series_radius_problem() {
     auto& e = pick(POWER_SERIES_TABLE);
     std::vector<std::string> pool{"0","1/2","1","2","3","inf"};
     return {
-        "Rayon de convergence de "+e.series+" ?",
+        "Radius of conv. of "+e.series+"?",
         {e.radius, e.radius},
         symbolicWrongs(e.radius, pool)
     };

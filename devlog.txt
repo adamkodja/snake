@@ -1,0 +1,76 @@
+Snake Math — Dev Log
+GameLab CS 2025–2026 · Adrien Rousselle, Léna Rachedi-Batorski, Adam Kodja
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+THE IDEA
+
+Eat the correct answer to a math question, avoid the wrong ones. The snake
+mechanic adds time pressure that makes mental math more engaging than a
+standard quiz.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PROTOTYPE — PYTHON / PYGAME
+
+We started in Python to validate the concept quickly. The core loop worked:
+generate a question, place answers as fruits, eat the right one to score.
+Easy problems only (addition, subtraction, multiplication, division, squares,
+modulo, GCD) with a basic lives system.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PORT TO C++ / SFML
+
+We switched to C++ for smoother rendering and easier distribution. A few
+issues came up:
+
+Unicode. Math symbols (sqrt, pi, x, subscripts) don't render with every font.
+We prioritized Segoe UI Symbol on Windows and added fallbacks for Linux and
+macOS.
+
+Working directory. Double-clicking the exe on Windows didn't find the assets.
+Fixed by moving to the exe's own folder at startup.
+
+Build system. One CMakeLists.txt handles Windows and Ubuntu.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+GAMEPLAY CHANGES
+
+Lives system. One life was too harsh. We added 3 lives with a bonus life fruit
+that appears when you're below max.
+
+Difficulty levels. Easy covers arithmetic. Medium adds algebra, trig, logs and
+sequences. Hard adds Taylor coefficients, asymptotic equivalents, roots of
+unity, series convergence and power series radius. Hard required a new
+wrong-answer generator since most answers are symbolic, not integers.
+
+Answer reveal. After eating any fruit, the game pauses 1.5 seconds: correct
+answer turns green, wrong ones turn red. Without this, wrong answers gave no
+feedback — you just lost a life and moved on.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+DISTRIBUTION
+
+The SFML DLLs were already copied by CMake. The missing piece was the Visual
+C++ runtime (vcruntime140.dll etc.). We added InstallRequiredSystemLibraries
+to CMakeLists.txt so they get copied automatically at build time. The Release
+folder is now self-contained.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+WHAT WE COULD ADD
+
+Custom problem sets. A built-in editor where teachers or students can create
+their own questions and answers, similar to Quizlet. Problems would be saved
+to a file and loaded at startup alongside the built-in ones.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+WHAT WE'D DO DIFFERENTLY
+
+- Skip the Python prototype and start in C++ directly.
+- Design symbolic wrong answers from the start instead of retrofitting them.
+- Add local high scores earlier — useful for playtesting motivation.
